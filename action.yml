@@ -5,8 +5,8 @@ inputs:
   setPolicy:
     description:  'Name of Set Policy'
     required: true
-  policyName:
-    description:  'Name of Policy'
+  policyList:
+    description:  'List of Policies'
     required: true
   network:
     description:  'Network to deploy the policy[staging/production/both]'
@@ -16,7 +16,7 @@ runs:
   image: 'Dockerfile'
   args:
     - ${{ inputs.setPolicy}}
-    - ${{ inputs.policyName}}
+    - ${{ inputs.policyList}}
     - ${{ inputs.network}}
 branding:
   color: orange
