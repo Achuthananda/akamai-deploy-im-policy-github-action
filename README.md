@@ -3,34 +3,42 @@ GitHub Action which deploys Image Manger Policy files to Akamai's Image Manager.
 
 <img src="https://developer.akamai.com/assets/img/developer-experience-logo.png" alt="akamai developer experience logo" width="200"/>
 
-**Important Note**: please copy the YAML syntax from **this README file** (see "workflow.yml Example" section below) into your action YAML and update the "zoneName" parameter to match your DNS domain
+**Important Note**: please copy the YAML syntax from **this README file** (see "workflow.yml Example" section below) into your action YAML and fill in the right values for "setPolicy" parameter to match your Image Manager Policy, policyList which has the list of all policies and network to determine staging/production/both.
 
-# Deploy DNS zone to Akamai Edge DNS   
+# Upload Image Manager Policy.   
 
-This action calls the [Akamai DNS API](https://developer.akamai.com/api/cloud_security/edge_dns_zone_management/v2.html) to deploy a DNS zone file into the corresponding Akamai EDGE DNS zone.
+This action uses [Akamai Image Manager CLI](https://github.com/akamai/cli-image-manager) to upload the Image Manager Policy.
 
 ## Usage
 
-Setup your repository with the following file:
+Setup your repository with the following files:
 ```
 <repository name>
-            - [domain.zone]
+            - [policyname.json]
 ```
 
-For example if your DNS domain is "example.com" you should have a file called "example.com.zone" containing the DNS records. See [DNS Zone File](https://en.wikipedia.org/wiki/Zone_file) for reference.
+For example if your Image manager policy is "apitest" you should have a file called "apitest.json" containing the image quality and transformation settings. See [Image Manager](https://developer.akamai.com/api/web_performance/image_manager/v2.html#policy) for reference.
 
-A DNS zone file would look something like this:
+An Image Manager Policy json file would look something like this:
 ```
-example.com.  IN  SOA   ns.example.com. username.example.com. ( 2007120710 1d 2h 4w 1h )
-example.com.  IN  NS    ns                    ; ns.example.com is a nameserver for example.com
-example.com.  IN  NS    ns.somewhere.example. ; ns.somewhere.example is a backup nameserver for example.com
-example.com.  IN  MX    10 mail.example.com.  ; mail.example.com is the mailserver for example.com
-example.com.  IN  A     192.0.2.1             ; IPv4 address for example.com
-              IN  AAAA  2001:db8:10::1        ; IPv6 address for example.com
-ns            IN  A     192.0.2.2             ; IPv4 address for ns.example.com
-              IN  AAAA  2001:db8:10::2        ; IPv6 address for ns.example.com
-www           IN  CNAME example.com.          ; www.example.com is an alias for example.com
-mail          IN  A     192.0.2.3             ; IPv4 address for mail.example.com
+{
+  "breakpoints": {
+    "widths": [
+      320,
+      640,
+      5000
+    ]
+  },
+  "id": "apitest",
+  "output": {},
+  "transformations": [
+    {
+      "transformation": "BackgroundColor",
+      "color": "#5a2626"
+    }
+  ],
+  "video": false
+}
 ```
 
 ## Secrets
@@ -39,7 +47,7 @@ All sensitive variables should be [set as encrypted secrets](https://help.github
 
 You need to declare an `EDGERC` secret in your repository containing the following structure :
 ```
-[dns]
+[im]
 client_secret = your_client_secret
 host = your_host
 access_token = your_access_token
@@ -50,8 +58,14 @@ You can retrieve these from [Akamai Control Center](https://control.akamai.com/)
 
 ## Inputs
 
-### `zoneName` (**Required**)
-DNS Zone name: the name of your DNS domain ('example.com' in our example)
+### `setPolicy` (**Required**)
+Image Manager Set Policy: The name of your Image Manager Policy in the config ('exampleIM' in our example)
+
+### `policyList` (**Required**)
+List of Policies: Each main policy can have many policies under it. The name of all policies which needs to be updated or created.
+
+### `network` (**Required**)
+Network of Deployment: The network to which the policy should be deployed.[staging/production/both]
 
 ## workflow.yml Example
 
@@ -61,11 +75,15 @@ Place in a `.yml` file such as this one in your `.github/workflows` folder. [Ref
 steps:
     - uses: actions/checkout@v2
     - name: Deploy DNS zone file
-      uses: akamai-contrib/akamai-deploy-dns-zone-github-action@1.3
+      uses: Achuthananda/akamai-deploy-im-policy-github-action@v2
       env:
         EDGERC: ${{ secrets.EDGERC }}
       with:
-        zoneName: 'example.com' # replace with the name of your domain
+        policyList:
+          apitest8
+          apitest9
+        setPolicy: 'achuth-akamaiuniversity-10785535'
+        network: staging
 ```
 
 ## License
